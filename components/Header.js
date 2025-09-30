@@ -26,6 +26,7 @@ const Header = () => {
     { href: '/akun', text: 'Jual Akun' },
     { href: '/tutorial', text: 'Tutorial' },
     { href: '/faq', text: 'FAQ' },
+    { href: '/tentang', text: 'Tentang Kami' },
   ];
 
   const AnimatedLogo = () => {

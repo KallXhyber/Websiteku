@@ -6,6 +6,7 @@ import { AuthProvider } from '../context/AuthContext';
 import '../styles/globals.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import NotificationPermission from '../components/NotificationPermission';
 
 const pageVariants = {
   initial: { opacity: 0, y: 15 },
@@ -16,25 +17,18 @@ const pageVariants = {
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
   
-  const [background] = React.useState('https://unsplash.com/id/foto/latar-belakang-abstrak-hitam-dan-kuning-dengan-kotak-dan-persegi-panjang-QPCMXLUQWnA');
-
   const bodyStyle = {
-    backgroundImage: background ? `url(${background})` : 'none',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    position: 'relative', // Dibutuhkan untuk overlay
-    zIndex: 1, // Dibutuhkan untuk overlay
+    position: 'relative',
+    zIndex: 1,
   };
   
   const contentWrapperStyle = { flex: '1 0 auto' };
 
   return React.createElement(AuthProvider, null,
-    // Tambahkan class 'bg-overlay' di sini
-    React.createElement('div', { style: bodyStyle, className: 'bg-discord-darker text-discord-light bg-overlay' },
+    React.createElement('div', { style: bodyStyle, className: 'text-discord-light bg-animated-gradient' },
       React.createElement(Header),
       React.createElement('div', { style: contentWrapperStyle },
         React.createElement(AnimatePresence, { mode: 'wait' },
@@ -49,7 +43,8 @@ function MyApp({ Component, pageProps }) {
           )
         )
       ),
-      React.createElement(Footer)
+      React.createElement(Footer),
+      React.createElement(NotificationPermission, null)
     )
   );
 }

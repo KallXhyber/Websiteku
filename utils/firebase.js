@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging } from "firebase/messaging";
 
 // Membaca kunci dari Environment Variables
 const firebaseConfig = {
@@ -13,8 +14,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Inisialisasi Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { app, auth, db };
+// Cek apakah kode berjalan di browser sebelum menginisialisasi messaging
+// Ini penting agar tidak error saat build di server
+const messaging = () => (typeof window !== 'undefined' ? getMessaging(app) : null);
+
+export { app, auth, db, messaging };
