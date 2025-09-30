@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../utils/firebase';
+import { db } from '../../utils/firebase';
 import { useAuth } from '../context/AuthContext';
 
 // Komponen untuk Rating Bintang
