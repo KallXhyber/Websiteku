@@ -5,16 +5,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
-import { Menu, X, User, LogIn, LogOut, Shield, Sun, Moon, Cloud } from 'lucide-react';
+import { Menu, X, User, LogIn, LogOut, Shield, Cloud } from 'lucide-react'; 
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 
 const Header = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const { user, userData } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -29,7 +27,7 @@ const Header = () => {
     { href: '/akun', text: 'Jual Akun' },
     { href: '/tutorial', text: 'Tutorial' },
     { href: '/faq', text: 'FAQ' },
-    { href: '/tentang', 'text': 'Tentang Kami' }
+    { href: '/tentang', text: 'Tentang Kami' }
   ];
 
   const AnimatedLogo = () => {
@@ -51,9 +49,6 @@ const Header = () => {
     React.createElement(Link, { href: '/' }, React.createElement(AnimatedLogo)),
     React.createElement('nav', { className: 'hidden md:flex items-center space-x-6' },
       navLinks.map(link => React.createElement(Link, { key: link.href, href: link.href, className: 'hover:text-discord-blurple transition-colors font-medium' }, link.text)),
-      React.createElement('button', { onClick: toggleTheme, className: 'p-2 rounded-full hover:bg-white/10' },
-        theme === 'dark' ? React.createElement(Sun, { size: 20 }) : React.createElement(Moon, { size: 20 })
-      ),
       userData?.role === 'admin' && React.createElement(Link, { href: '/admin', className: 'flex items-center text-yellow-400 hover:text-yellow-300' }, React.createElement(Shield, { size: 20, className: 'mr-2' }), 'Admin'),
       user ?
         React.createElement(Link, { href: '/profile', className: 'flex items-center bg-discord-blurple p-2 rounded-full hover:bg-opacity-80' }, React.createElement(User, { size: 20 })) :
@@ -65,22 +60,7 @@ const Header = () => {
     isMenuOpen && React.createElement('div', { className: 'absolute top-full left-0 w-full bg-black/30 backdrop-blur-lg border-t border-white/10 shadow-lg md:hidden' },
       React.createElement('nav', { className: 'flex flex-col p-4' },
         navLinks.map(link => React.createElement(Link, { key: link.href, href: link.href, className: 'py-2 px-2 text-lg hover:bg-white/10 rounded', onClick: () => setMenuOpen(false) }, link.text)),
-        
-        React.createElement('div', {className: 'border-t border-white/10 my-2'}),
-
-        // Tombol Ganti Tema untuk menu mobile
-        React.createElement('button', {
-            onClick: () => { setMenuOpen(false); toggleTheme(); },
-            className: 'flex items-center py-2 px-2 text-lg w-full rounded hover:bg-white/10'
-          },
-            theme === 'dark' ? 
-              React.createElement(Sun, { size: 20, className: 'mr-2' }) : 
-              React.createElement(Moon, { size: 20, className: 'mr-2' }),
-            'Ganti Tema'
-        ),
-
-        React.createElement('div', {className: 'border-t border-white/10 my-2'}),
-
+        React.createElement('div', {className: 'border-t border-discord-darker my-2'}),
         user ?
           React.createElement(React.Fragment, null,
             userData?.role === 'admin' && React.createElement(Link, { href: '/admin', className: 'flex items-center text-yellow-400 py-2 px-2 text-lg', onClick: () => setMenuOpen(false) }, React.createElement(Shield, { className: 'mr-2', size: 20 }), 'Panel Admin'),

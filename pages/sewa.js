@@ -1,11 +1,11 @@
 // pages/sewa.js
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { motion } from 'framer-motion';
-import { Server, ShieldCheck, MessageSquare, ExternalLink, Plus, Minus, Wallet } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Server, ShieldCheck, MessageSquare, ExternalLink, Plus, Minus, Wallet, Bell, Loader2 } from 'lucide-react';
 import Alert from '../components/Alert';
 import { db, auth } from '../utils/firebase';
-import { setDoc, doc, serverTimestamp, collection, addDoc, updateDoc, increment } from 'firebase/firestore';
+import { setDoc, doc, serverTimestamp, collection, addDoc, updateDoc, increment, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../utils/supabase';
@@ -130,7 +130,7 @@ const TransactionPopup = ({ admin, user, paket, totalHarga, jumlahJam, onClose }
     );
 };
 
-// --- HALAMAN UTAMA SEWA PC ---
+// --- KOMPONEN UTAMA HALAMAN SEWA PC ---
 export default function SewaPage() {
   const [admins, setAdmins] = useState([]);
   const [selectedAdmin, setSelectedAdmin] = useState(null);

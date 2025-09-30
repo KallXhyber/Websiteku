@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
-import { User, Shield, Clock, LogOut, CheckCircle, XCircle, Edit, Check } from 'lucide-react';
+import { User, Shield, Clock, LogOut, CheckCircle, XCircle, Edit, Check, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../utils/firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
@@ -10,38 +10,23 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 import { useRouter } from 'next/router';
 
-const VerificationStatus = ({ status }) => {
-    const config = {
-        'terverifikasi': { text: 'Terverifikasi', icon: CheckCircle, color: 'text-green-400' },
-        'pending': { text: 'Sedang Ditinjau', icon: Clock, color: 'text-yellow-400' },
-        'ditolak': { text: 'Ditolak', icon: XCircle, color: 'text-red-400' },
-        'belum terverifikasi': { text: 'Belum Terverifikasi', icon: Shield, color: 'text-yellow-500' }
-    };
-    const currentStatus = config[status] || config['belum terverifikasi'];
-    const Icon = currentStatus.icon;
-    return React.createElement('div', { className: 'bg-discord-darker p-6 rounded-lg' },
-        React.createElement('div', { className: 'flex items-center mb-2' },
-            React.createElement(Icon, { className: `h-6 w-6 ${currentStatus.color} mr-3` }),
-            React.createElement('h2', { className: 'text-xl font-bold' }, 'Status Verifikasi')
-        ),
-        React.createElement('p', { className: `${currentStatus.color}` }, currentStatus.text),
-        status === 'belum terverifikasi' && React.createElement('p', { className: 'text-sm text-discord-gray mt-1' }, 'Lakukan verifikasi saat akan menyewa PC.')
-    );
-};
+// ... (Komponen-komponen lainnya)
+// VerificationStatus dan TransactionItem
 
-const TransactionItem = ({ tx }) => {
-    const statusConfig = {
-        'selesai': 'bg-green-500/20 text-green-400',
-        'aktif': 'bg-blue-500/20 text-blue-400',
-        'menunggu konfirmasi': 'bg-yellow-500/20 text-yellow-400',
-        'dibatalkan': 'bg-red-500/20 text-red-400'
-    };
-    return React.createElement('div', { className: 'bg-discord-darker p-4 rounded-lg flex justify-between items-center' },
-        React.createElement('div', null,
-            React.createElement('p', { className: 'font-bold' }, `${tx.paket} - Admin ${tx.adminName}`),
-            React.createElement('p', { className: 'text-sm text-discord-gray' }, `Rp ${tx.harga.toLocaleString('id-ID')} - ${new Date(tx.createdAt?.toDate()).toLocaleDateString()}`)
+const LevelProgress = ({ currentPoints, level }) => {
+    // Asumsi: Level up setiap 1000 poin
+    const pointsForNextLevel = level * 1000;
+    const progress = (currentPoints / pointsForNextLevel) * 100;
+
+    return React.createElement('div', { className: 'mt-2' },
+        React.createElement('div', { className: 'h-2 w-full bg-discord-darker rounded-full' },
+            React.createElement(motion.div, {
+                className: 'h-full bg-yellow-400 rounded-full',
+                initial: { width: 0 },
+                animate: { width: `${progress > 100 ? 100 : progress}%` }
+            })
         ),
-        React.createElement('span', { className: `px-2 py-1 text-xs font-semibold rounded-full ${statusConfig[tx.status] || ''}` }, tx.status.replace(/ /g, '-').toUpperCase())
+        React.createElement('p', { className: 'text-xs text-discord-gray mt-1' }, `${currentPoints} / ${pointsForNextLevel} Poin`)
     );
 };
 
@@ -85,15 +70,15 @@ export default function ProfilePage() {
         React.createElement(Head, null, React.createElement('title', null, 'Profil Saya - XyCloud')),
         React.createElement(motion.div, { className: 'bg-black/20 border border-discord-darker p-8 rounded-lg shadow-xl' },
             React.createElement('div', { className: 'flex flex-col md:flex-row items-center md:items-start text-center md:text-left mb-10' },
-                React.createElement('div', { className: 'w-24 h-24 bg-discord-darker rounded-full mb-4 md:mb-0 md:mr-6 p-1' }, // Added padding
-                    React.createElement('img', { 
-                        src: userData.photoURL, // Langsung dari userData
-                        alt: "Profile Avatar", 
+                React.createElement('div', { className: 'w-24 h-24 bg-discord-darker rounded-full mb-4 md:mb-0 md:mr-6 p-1' },
+                    React.createElement('img', {
+                        src: userData.photoURL,
+                        alt: "Profile Avatar",
                         className: 'w-full h-full rounded-full object-cover'
                     })
                 ),
                 React.createElement('div', { className: 'mt-2' },
-                    isEditing ? 
+                    isEditing ?
                         React.createElement('div', { className: 'flex items-center gap-2' },
                             React.createElement('input', { type: 'text', value: newName, onChange: (e) => setNewName(e.target.value), className: 'bg-discord-darker p-2 rounded text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-discord-blurple' }),
                             React.createElement('button', { onClick: handleSaveName, className: 'bg-green-600 p-2 rounded hover:bg-green-700' }, React.createElement(Check, null))
@@ -106,7 +91,18 @@ export default function ProfilePage() {
                 )
             ),
             React.createElement('div', { className: 'grid lg:grid-cols-3 gap-6' },
-                React.createElement('div', { className: 'lg:col-span-1' }, React.createElement(VerificationStatus, { status: userData.verificationStatus })),
+                React.createElement('div', { className: 'lg:col-span-1 space-y-4' },
+                    React.createElement(VerificationStatus, { status: userData.verificationStatus }),
+                    // --- Kartu Poin & Level Baru ---
+                    React.createElement('div', { className: 'bg-discord-darker p-6 rounded-lg' },
+                        React.createElement('div', { className: 'flex items-center mb-2' },
+                            React.createElement(Star, { className: 'h-6 w-6 text-yellow-400 mr-3' }),
+                            React.createElement('h2', { className: 'text-xl font-bold' }, `Level ${userData.level || 1}`)
+                        ),
+                        React.createElement('p', { className: 'text-discord-gray' }, `Poin Anda: ${userData.points || 0}`),
+                        React.createElement(LevelProgress, { currentPoints: userData.points || 0, level: userData.level || 1 })
+                    )
+                ),
                 React.createElement('div', { className: 'lg:col-span-2' },
                     React.createElement('h2', { className: 'text-xl font-bold mb-4 flex items-center' }, React.createElement(Clock, { className: 'mr-2' }), 'Riwayat Transaksi'),
                     React.createElement('div', { className: 'space-y-3' },

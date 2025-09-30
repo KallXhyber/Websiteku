@@ -1,38 +1,18 @@
 // context/ThemeContext.js
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark'); // Tema default adalah 'dark'
-
   useEffect(() => {
-    // Cek tema yang tersimpan di localStorage saat pertama kali load
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
-  }, []);
-  
-  useEffect(() => {
-    // Terapkan class 'dark' atau hapus dari elemen <html>
+    // Pastikan kelas 'dark' selalu ada di elemen <html>
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    // Simpan pilihan tema ke localStorage
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    root.classList.add('dark');
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
-  };
-
-  const value = { theme, toggleTheme };
+  const value = { theme: 'dark' };
 
   return React.createElement(ThemeContext.Provider, { value }, children);
 };

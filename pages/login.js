@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock } from 'lucide-react';
-// Import koneksi Firebase
 import { auth } from '../utils/firebase';
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { signIn } from "next-auth/react"; // Tambahkan import ini
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,17 +19,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      // 1. Lakukan proses login dengan Firebase
       await signInWithEmailAndPassword(auth, email, password);
-      
-      // 2. Arahkan ke halaman profil setelah berhasil
       router.push('/profile');
-
     } catch (err) {
-      // Tangani error (misal: user tidak ditemukan, password salah)
       setError("Email atau password salah. Silakan coba lagi.");
       console.error(err);
     }
+  };
+  
+  const handleDiscordLogin = () => {
+    signIn('discord', { callbackUrl: '/profile' });
   };
 
   return React.createElement('div', { className: 'container mx-auto px-4 py-12 flex justify-center items-center' },
@@ -65,7 +64,26 @@ export default function LoginPage() {
           type: 'submit',
           className: 'w-full bg-discord-blurple text-white font-bold py-3 px-8 rounded-full hover:bg-opacity-80 transition-all duration-300'
         }, 'Masuk'),
-        React.createElement('p', { className: 'text-center text-sm text-discord-gray' },
+        
+        // Tombol baru untuk Login dengan Discord
+        React.createElement('div', { className: 'relative my-6' },
+          React.createElement('div', { className: 'absolute inset-0 flex items-center' },
+            React.createElement('div', { className: 'w-full border-t border-discord-gray' })
+          ),
+          React.createElement('div', { className: 'relative flex justify-center text-sm' },
+            React.createElement('span', { className: 'bg-black/20 px-2 text-discord-gray' }, 'Atau')
+          )
+        ),
+        React.createElement('button', {
+            onClick: handleDiscordLogin,
+            type: 'button', // Penting agar tidak submit form
+            className: 'w-full flex items-center justify-center bg-[#5865f2] text-white font-bold py-3 px-8 rounded-full hover:bg-[#4752c4] transition-all duration-300'
+          },
+          React.createElement('img', { src: 'https://i.imgur.com/tL4A08S.png', alt: 'Discord Logo', className: 'h-6 w-6 mr-3' }),
+          'Masuk dengan Discord'
+        ),
+
+        React.createElement('p', { className: 'text-center text-sm text-discord-gray mt-6' },
           'Belum punya akun? ',
           React.createElement(Link, { href: '/register', className: 'font-semibold text-discord-blurple hover:underline' }, 'Daftar di sini')
         )
