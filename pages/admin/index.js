@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, UserCheck, XCircle, Clock, ListOrdered, Check, X, Gamepad2, PlusCircle, Edit, Trash2, Monitor } from 'lucide-react';
+import { Shield, UserCheck, XCircle, Clock, ListOrdered, Check, X, Gamepad2, PlusCircle, Edit, Trash2, Monitor, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../utils/firebase';
 import { supabase } from '../../utils/supabase';
@@ -13,7 +13,7 @@ import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, addDoc, d
 const VerificationModal = ({ request, onClose }) => {
   if (!request) return null;
 
-  const sendNotification = async () => {
+  const sendNotification = async (status) => {
     try {
         const userDoc = await getDoc(doc(db, 'users', request.userId));
         if (userDoc.exists() && userDoc.data().fcmToken) {
@@ -22,8 +22,8 @@ const VerificationModal = ({ request, onClose }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     token: userDoc.data().fcmToken,
-                    title: 'Verifikasi Berhasil! ✅',
-                    body: 'Akun Anda telah disetujui. Sekarang Anda bisa mulai menyewa PC.'
+                    title: status === 'approved' ? 'Verifikasi Berhasil! ✅' : 'Verifikasi Ditolak ❌',
+                    body: status === 'approved' ? 'Akun Anda telah disetujui. Sekarang Anda bisa mulai menyewa PC.' : 'Verifikasi akun Anda ditolak. Silakan coba lagi.'
                 }),
             });
         }
@@ -36,7 +36,7 @@ const VerificationModal = ({ request, onClose }) => {
     try {
       await updateDoc(doc(db, 'verification_requests', request.userId), { status: 'approved' });
       await updateDoc(doc(db, 'users', request.userId), { verificationStatus: 'terverifikasi' });
-      await sendNotification(); // Panggil fungsi kirim notifikasi
+      await sendNotification('approved');
       onClose();
     } catch (error) { console.error("Error approving verification:", error); }
   };
@@ -45,6 +45,7 @@ const VerificationModal = ({ request, onClose }) => {
     try {
       await updateDoc(doc(db, 'verification_requests', request.userId), { status: 'rejected' });
       await updateDoc(doc(db, 'users', request.userId), { verificationStatus: 'ditolak' });
+      await sendNotification('rejected');
       onClose();
     } catch (error) { console.error("Error rejecting verification:", error); }
   };
@@ -111,14 +112,92 @@ const SetPCUsedModal = ({ onSubmit, onClose }) => {
 const CompleteTransactionModal = ({ transaction, onClose }) => {
     const [hoursUsed, setHoursUsed] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const handleSubmit = async () => { setIsLoading(true); try { const totalHoursMatch = transaction.paket.match(/(\d+)\s*Jam/); const totalHours = totalHoursMatch ? parseInt(totalHoursMatch[1], 10) : 0; if (totalHours > 0 && hoursUsed < totalHours) { const remainingMinutes = (totalHours - hoursUsed) * 60; const userDocRef = doc(db, 'users', transaction.userId); await updateDoc(userDocRef, { saldoWaktu: increment(remainingMinutes) }); } await updateDoc(doc(db, 'transactions', transaction.id), { status: 'selesai' }); onClose(); } catch (error) { console.error("Gagal menyelesaikan transaksi:", error); alert("Terjadi kesalahan."); } finally { setIsLoading(false); } };
+    const [reviewLink, setReviewLink] = useState(''); // State baru untuk link ulasan
+    
+    // --- BAGIAN BARU UNTUK REVIEW ---
+    const handleCompleteAndCreateReview = async () => {
+        setIsLoading(true);
+        try {
+            // 1. Logika untuk menyelesaikan transaksi (sama seperti sebelumnya)
+            const totalHoursMatch = transaction.paket.match(/(\d+)\s*Jam/);
+            const totalHours = totalHoursMatch ? parseInt(totalHoursMatch[1], 10) : 0;
+            if (totalHours > 0 && hoursUsed < totalHours) {
+                const remainingMinutes = (totalHours - hoursUsed) * 60;
+                const userDocRef = doc(db, 'users', transaction.userId);
+                await updateDoc(userDocRef, { saldoWaktu: increment(remainingMinutes) });
+            }
+            await updateDoc(doc(db, 'transactions', transaction.id), { status: 'selesai' });
+
+            // 2. Buat dokumen ulasan baru di koleksi 'reviews'
+            const newReviewDoc = {
+                transactionId: transaction.id,
+                userId: transaction.userId,
+                pcId: transaction.pcId, // Pastikan kamu menyimpan pcId di transaksi
+                rating: null,
+                comment: null,
+                timestamp: serverTimestamp(),
+                status: 'pending'
+            };
+            const reviewDocRef = await addDoc(collection(db, 'reviews'), newReviewDoc);
+            
+            // 3. Simpan link uniknya di state
+            const link = `${window.location.origin}/review/${reviewDocRef.id}`;
+            setReviewLink(link);
+
+        } catch (error) {
+            console.error("Gagal menyelesaikan transaksi dan membuat link ulasan:", error);
+            alert("Terjadi kesalahan.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleCompleteWithoutReview = async () => {
+        setIsLoading(true);
+        try {
+            const totalHoursMatch = transaction.paket.match(/(\d+)\s*Jam/);
+            const totalHours = totalHoursMatch ? parseInt(totalHoursMatch[1], 10) : 0;
+            if (totalHours > 0 && hoursUsed < totalHours) {
+                const remainingMinutes = (totalHours - hoursUsed) * 60;
+                const userDocRef = doc(db, 'users', transaction.userId);
+                await updateDoc(userDocRef, { saldoWaktu: increment(remainingMinutes) });
+            }
+            await updateDoc(doc(db, 'transactions', transaction.id), { status: 'selesai' });
+            onClose();
+        } catch (error) {
+            console.error("Gagal menyelesaikan transaksi:", error);
+            alert("Terjadi kesalahan.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    // Tampilan modal akan berubah setelah link dibuat
+    if (reviewLink) {
+      return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4' },
+        React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-sm text-white' },
+          React.createElement('h3', { className: 'text-lg font-bold mb-4 flex items-center' }, React.createElement(Star, { className: 'mr-2' }), 'Link Ulasan Berhasil Dibuat!'),
+          React.createElement('p', { className: 'text-sm text-discord-gray mb-4' }, 'Silakan salin link di bawah ini dan kirimkan ke pengguna melalui WhatsApp:'),
+          React.createElement('div', { className: 'bg-discord-darker p-3 rounded-lg break-all text-sm mb-4' }, reviewLink),
+          React.createElement('div', { className: 'flex justify-end' },
+            React.createElement('button', { onClick: onClose, className: 'bg-discord-blurple py-2 px-4 rounded font-semibold' }, 'Selesai')
+          )
+        )
+      );
+    }
+
+
     return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4' },
         React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-sm text-white' },
             React.createElement('h3', { className: 'text-lg font-bold mb-4' }, 'Selesaikan Transaksi'),
             React.createElement('p', { className: 'text-sm text-discord-gray mb-1' }, `Paket: ${transaction.paket}`),
             React.createElement('p', { className: 'text-sm text-discord-gray mb-4' }, `User: ${transaction.userEmail}`),
             React.createElement('div', { className: 'space-y-2' }, React.createElement('label', { className: 'text-sm' }, 'Total Jam Terpakai:'), React.createElement('input', { type: 'number', value: hoursUsed, onChange: (e) => setHoursUsed(Number(e.target.value)), className: 'w-full bg-discord-darker p-2 rounded', min: '0' })),
-            React.createElement('div', { className: 'flex justify-end gap-4 mt-6' }, React.createElement('button', { onClick: onClose, className: 'bg-gray-600 py-2 px-4 rounded' }, 'Batal'), React.createElement('button', { onClick: handleSubmit, disabled: isLoading, className: 'bg-discord-blurple py-2 px-4 rounded' }, isLoading ? 'Memproses...' : 'Selesaikan & Simpan'))
+            React.createElement('div', { className: 'flex justify-end gap-4 mt-6' }, 
+              React.createElement('button', { onClick: onClose, className: 'bg-gray-600 py-2 px-4 rounded' }, 'Batal'),
+              React.createElement('button', { onClick: handleCompleteWithoutReview, disabled: isLoading, className: 'bg-red-600 py-2 px-4 rounded' }, isLoading ? 'Memproses...' : 'Selesaikan'),
+              React.createElement('button', { onClick: handleCompleteAndCreateReview, disabled: isLoading, className: 'bg-discord-blurple py-2 px-4 rounded' }, isLoading ? 'Memproses...' : 'Selesaikan & Buat Link Ulasan')
+            )
         )
     );
 };
@@ -134,7 +213,7 @@ const PCManagement = () => {
     return React.createElement('div', null,
         React.createElement(AnimatePresence, null, isInputModalOpen && React.createElement(SetPCUsedModal, { onClose: () => setInputModalOpen(false), onSubmit: handleUserInputSubmit })),
         React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Monitor, { size: 20, className: 'mr-2' }), 'Status Slot PC'),
-        React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-4 rounded-lg space-y-3' }, pcSlots.map(pc => React.createElement('div', { key: pc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between items-center' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, pc.slotId), React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)), React.createElement('select', { value: pc.status, onChange: (e) => handleStatusChange(pc.id, e.target.value), className: 'bg-discord-dark text-white rounded p-1 text-sm' }, React.createElement('option', { value: 'READY' }, 'Ready'), React.createElement('option', { value: 'DIGUNAKAN' }, 'Digunakan'), React.createElement('option', { value: 'OFFLINE' }, 'Offline')))))
+        React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-4 rounded-lg space-y-3' }, pcSlots.map(pc => React.createElement('div', { key: pc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between items-center' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, pc.slotId), React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)), React.createElement('select', { value: pc.status, onChange: (e) => handleStatusChange(pc.id, e.target.value), className: 'bg-discord-dark text-white rounded p-1 text-sm' }, React.createElement('option', { value: 'READY' }, 'Ready'), React.createElement('option', { value: 'DIGUNAN' }, 'Digunakan'), React.createElement('option', { value: 'OFFLINE' }, 'Offline')))))
     );
 };
 
@@ -168,7 +247,7 @@ export default function AdminPage() {
     
     const renderTabContent = () => {
         switch (activeTab) {
-            case 'transactions': return React.createElement(motion.div, { key: 'transactions' }, React.createElement('div', { className: 'mb-8' }, React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Clock, { size: 20, className: 'mr-2' }), 'Menunggu Konfirmasi'), React.createElement('div', { className: 'bg-black/20 p-4 rounded-lg space-y-3' }, pendingTransactions.length > 0 ? pendingTransactions.map(tx => React.createElement('div', { key: tx.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, tx.userEmail), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Billing: ${tx.billingId}`)), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { onClick: () => handleTransactionStatus(tx.id, 'dibatalkan'), className: 'bg-red-600 p-2 rounded' }, React.createElement(X, {size:16})), React.createElement('button', { onClick: () => handleTransactionStatus(tx.id, 'aktif'), className: 'bg-green-600 p-2 rounded' }, React.createElement(Check, {size:16}))))) : React.createElement('p', { className: 'text-discord-gray text-center p-4' }, 'Tidak ada transaksi menunggu.'))), React.createElement('div', {}, React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, React.createElement(ListOrdered, { size: 20, className: 'mr-2' }), 'Transaksi Aktif'), React.createElement('div', { className: 'bg-black/20 p-4 rounded-lg space-y-3' }, activeTransactions.length > 0 ? activeTransactions.map(tx => React.createElement('div', { key: tx.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, tx.userEmail), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Paket: ${tx.paket}`)), React.createElement('button', { onClick: () => handleOpenCompleteModal(tx), className: 'bg-discord-blurple py-2 px-3 rounded text-sm' }, 'Selesaikan'))) : React.createElement('p', { className: 'text-discord-gray text-center p-4' }, 'Tidak ada transaksi aktif.'))));
+            case 'transactions': return React.createElement(motion.div, { key: 'transactions' }, React.createElement('div', { className: 'mb-8' }, React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Clock, { size: 20, className: 'mr-2' }), 'Menunggu Konfirmasi'), React.createElement('div', { className: 'bg-black/20 p-4 rounded-lg space-y-3' }, pendingTransactions.length > 0 ? pendingTransactions.map(tx => React.createElement('div', { key: tx.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, tx.userEmail), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Billing: ${tx.billingId}`)), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { onClick: () => handleTransactionStatus(tx.id, 'dibatalkan'), className: 'bg-red-600 p-2 rounded' }, React.createElement(X, {size:16})), React.createElement('button', { onClick: () => handleTransactionStatus(tx.id, 'aktif'), className: 'bg-green-600 p-2 rounded' }, React.createElement(Check, {size:16}))))) : React.createElement('p', { className: 'text-discord-gray text-center p-4' }, 'Tidak ada transaksi menunggu.'))), React.createElement('div', {}, React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(ListOrdered, { size: 20, className: 'mr-2' }), 'Transaksi Aktif'), React.createElement('div', { className: 'bg-black/20 p-4 rounded-lg space-y-3' }, activeTransactions.length > 0 ? activeTransactions.map(tx => React.createElement('div', { key: tx.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, tx.userEmail), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Paket: ${tx.paket}`)), React.createElement('button', { onClick: () => handleOpenCompleteModal(tx), className: 'bg-discord-blurple py-2 px-3 rounded text-sm' }, 'Selesaikan'))) : React.createElement('p', { className: 'text-discord-gray text-center p-4' }, 'Tidak ada transaksi aktif.'))));
             case 'pcs': return React.createElement(motion.div, { key: 'pcs' }, React.createElement(PCManagement, null));
             case 'accounts': return React.createElement(motion.div, { key: 'accounts' }, React.createElement('div', { className: 'flex justify-between items-center mb-4' }, React.createElement('h2', { className: 'text-2xl font-bold flex items-center' }, React.createElement(Gamepad2, { size: 20, className: 'mr-2' }), 'Produk Akun Game'), React.createElement('button', { onClick: () => { setEditingAccount(null); setAccountModalOpen(true); }, className: 'bg-green-600 text-white py-2 px-4 rounded flex items-center' }, React.createElement(PlusCircle, { size: 18, className: 'mr-2' }), 'Tambah Produk')), React.createElement('div', { className: 'bg-black/20 p-4 rounded-lg space-y-3' }, gameAccounts.length > 0 ? gameAccounts.map(acc => React.createElement('div', { key: acc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, acc.gameName), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Rp ${acc.price.toLocaleString('id-ID')}`)), React.createElement('div', { className: 'flex gap-2' }, React.createElement('button', { onClick: () => { setEditingAccount(acc); setAccountModalOpen(true); }, className: 'bg-blue-600 p-2 rounded' }, React.createElement(Edit, { size: 16 })), React.createElement('button', { onClick: () => handleDeleteAccount(acc.id), className: 'bg-red-600 p-2 rounded' }, React.createElement(Trash2, { size: 16 }))))) : React.createElement('p', { className: 'text-discord-gray text-center p-4' }, 'Belum ada produk akun game.')));
             case 'verifications': return React.createElement(motion.div, { key: 'verifications' }, React.createElement('div', { className: 'bg-black/20 p-6 rounded-lg' }, verifRequests.length > 0 ? React.createElement('div', { className: 'space-y-4' }, verifRequests.map(req => React.createElement('div', { key: req.id, className: 'bg-discord-darker p-4 rounded-lg flex justify-between' }, React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, req.userEmail), React.createElement('p', { className: 'text-sm text-discord-gray' }, `Dikirim: ${req.submittedAt ? new Date(req.submittedAt.toDate()).toLocaleTimeString() : 'N/A'}`)), React.createElement('button', { onClick: () => setSelectedRequest(req), className: 'bg-discord-blurple py-2 px-4 rounded' }, 'Lihat Detail')))) : React.createElement('p', { className: 'text-discord-gray text-center' }, 'Tidak ada permintaan verifikasi tertunda.')));
@@ -187,4 +266,5 @@ export default function AdminPage() {
             isCompleteModalOpen && React.createElement(CompleteTransactionModal, { transaction: completingTransaction, onClose: () => setCompleteModalOpen(false) })
         )
     );
+}
 }

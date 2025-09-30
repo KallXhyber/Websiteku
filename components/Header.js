@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
-import { Menu, X, User, LogIn, LogOut, Shield, Sun, Moon, Cloud } from 'lucide-react'; // Import Cloud
+import { Menu, X, User, LogIn, LogOut, Shield, Sun, Moon, Cloud } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { signOut } from 'firebase/auth';
@@ -29,7 +29,7 @@ const Header = () => {
     { href: '/akun', text: 'Jual Akun' },
     { href: '/tutorial', text: 'Tutorial' },
     { href: '/faq', text: 'FAQ' },
-    { href: '/tentang', text: 'Tentang Kami' }
+    { href: '/tentang', 'text': 'Tentang Kami' }
   ];
 
   const AnimatedLogo = () => {
@@ -38,16 +38,15 @@ const Header = () => {
     const letterVariants = { initial: { y: 0 }, hover: { y: -5, transition: { type: 'spring', stiffness: 300, damping: 10 } } };
     return React.createElement(motion.div, { 
         variants: containerVariants, initial: "initial", whileHover: "hover", 
-        className: 'flex cursor-pointer relative items-center z-10' // Tambah relative & z-10
+        className: 'flex cursor-pointer relative items-center z-10'
     },
-      React.createElement(Cloud, { className: 'mr-2 text-discord-blurple animate-pulse' }), // Logo Awan dengan animasi
+      React.createElement(Cloud, { className: 'mr-2 text-discord-blurple animate-pulse' }),
       logoText.split('').map((char, index) => React.createElement(motion.span, { key: `${char}-${index}`, variants: letterVariants, className: 'inline-block text-2xl font-bold' }, char))
     );
   };
 
   return React.createElement('header', { 
       className: 'bg-white/5 dark:bg-black/30 backdrop-blur-md text-white p-4 flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-white/10 dark:border-white/5' 
-      // Background disesuaikan untuk dark/light mode
   },
     React.createElement(Link, { href: '/' }, React.createElement(AnimatedLogo)),
     React.createElement('nav', { className: 'hidden md:flex items-center space-x-6' },
@@ -66,7 +65,22 @@ const Header = () => {
     isMenuOpen && React.createElement('div', { className: 'absolute top-full left-0 w-full bg-black/30 backdrop-blur-lg border-t border-white/10 shadow-lg md:hidden' },
       React.createElement('nav', { className: 'flex flex-col p-4' },
         navLinks.map(link => React.createElement(Link, { key: link.href, href: link.href, className: 'py-2 px-2 text-lg hover:bg-white/10 rounded', onClick: () => setMenuOpen(false) }, link.text)),
-        React.createElement('div', {className: 'border-t border-discord-darker my-2'}),
+        
+        React.createElement('div', {className: 'border-t border-white/10 my-2'}),
+
+        // Tombol Ganti Tema untuk menu mobile
+        React.createElement('button', {
+            onClick: () => { setMenuOpen(false); toggleTheme(); },
+            className: 'flex items-center py-2 px-2 text-lg w-full rounded hover:bg-white/10'
+          },
+            theme === 'dark' ? 
+              React.createElement(Sun, { size: 20, className: 'mr-2' }) : 
+              React.createElement(Moon, { size: 20, className: 'mr-2' }),
+            'Ganti Tema'
+        ),
+
+        React.createElement('div', {className: 'border-t border-white/10 my-2'}),
+
         user ?
           React.createElement(React.Fragment, null,
             userData?.role === 'admin' && React.createElement(Link, { href: '/admin', className: 'flex items-center text-yellow-400 py-2 px-2 text-lg', onClick: () => setMenuOpen(false) }, React.createElement(Shield, { className: 'mr-2', size: 20 }), 'Panel Admin'),
