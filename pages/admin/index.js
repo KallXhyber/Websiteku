@@ -1,4 +1,3 @@
-// pages/admin/index.js
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -14,21 +13,21 @@ const VerificationModal = ({ request, onClose }) => {
   if (!request) return null;
   const handleApprove = async () => { try { await updateDoc(doc(db, 'verification_requests', request.userId), { status: 'approved' }); await updateDoc(doc(db, 'users', request.userId), { verificationStatus: 'terverifikasi' }); onClose(); } catch (error) { console.error("Error approving verification:", error); } };
   const handleReject = async () => { try { await updateDoc(doc(db, 'verification_requests', request.userId), { status: 'rejected' }); await updateDoc(doc(db, 'users', request.userId), { verificationStatus: 'ditolak' }); onClose(); } catch (error) { console.error("Error rejecting verification:", error); } };
-  return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+  return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
     React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-2xl relative text-white', initial: { scale: 0.8 }, animate: { scale: 1 }, exit: { scale: 0.8 } },
       React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, 'Detail Verifikasi'),
       React.createElement('p', { className: 'mb-1' }, React.createElement('strong', null, 'User Email: '), request.userEmail),
       React.createElement('p', { className: 'mb-4 text-sm text-discord-gray' }, `Dikirim pada: ${request.submittedAt ? new Date(request.submittedAt.toDate()).toLocaleString() : 'N/A'}`),
       request.message && React.createElement('blockquote', { className: 'bg-discord-darker p-3 rounded-lg mb-4 text-sm italic' }, `Pesan User: "${request.message}"`),
       React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center' },
-        React.createElement('a', { href: request.discordUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Discord'),
-        React.createElement('a', { href: request.steamUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Steam'),
-        React.createElement('a', { href: request.cfxUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Cfx.re')
+        React.createElement('a', { href: request.discordUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Discord'),
+        React.createElement('a', { href: request.steamUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Steam'),
+        React.createElement('a', { href: request.cfxUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Cfx.re')
       ),
       React.createElement('div', { className: 'flex justify-end gap-4' },
-        React.createElement('button', { onClick: onClose, className: 'py-2 px-4 rounded font-semibold bg-gray-600' }, 'Tutup'),
-        React.createElement('button', { onClick: handleReject, className: 'bg-red-600 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(XCircle, {size:18, className:'mr-2'}), 'Tolak'),
-        React.createElement('button', { onClick: handleApprove, className: 'bg-green-600 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(UserCheck, {size:18, className:'mr-2'}), 'Setujui')
+        React.createElement('button', { onClick: onClose, className: 'py-2 px-4 rounded font-semibold bg-gray-600 hover:bg-gray-700' }, 'Tutup'),
+        React.createElement('button', { onClick: handleReject, className: 'bg-red-600 hover:bg-red-700 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(XCircle, {size:18, className:'mr-2'}), 'Tolak'),
+        React.createElement('button', { onClick: handleApprove, className: 'bg-green-600 hover:bg-green-700 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(UserCheck, {size:18, className:'mr-2'}), 'Setujui')
       )
     )
   );
@@ -54,18 +53,14 @@ const AccountFormModal = ({ account, onClose }) => {
                 const { data: { publicUrl } } = supabase.storage.from('account-images').getPublicUrl(data.path);
                 imageUrl = publicUrl;
             }
-            const dataToSave = {
-                ...formData, price: Number(formData.price), imageUrl,
-                adminId: userData.adminId, adminName: userData.displayName || userData.email.split('@')[0], adminWa: userData.whatsapp || '',
-                isSold: account?.isSold || false, updatedAt: serverTimestamp(),
-            };
+            const dataToSave = { ...formData, price: Number(formData.price), imageUrl, adminId: userData.adminId, adminName: userData.displayName || userData.email.split('@')[0], adminWa: userData.whatsapp || '', isSold: account?.isSold || false, updatedAt: serverTimestamp() };
             if (account) { await updateDoc(doc(db, 'game_accounts', account.id), dataToSave); } 
             else { await addDoc(collection(db, 'game_accounts'), { ...dataToSave, createdAt: serverTimestamp() }); }
             onClose();
         } catch (err) { console.error("Error saving account:", err); setError("Gagal menyimpan data."); } 
         finally { setIsLoading(false); }
     };
-    return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4' },
+    return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4' },
         React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-lg relative text-white' },
             React.createElement('h2', { className: 'text-2xl font-bold mb-4' }, account ? 'Edit Akun Game' : 'Tambah Akun Game'),
             React.createElement('form', { onSubmit: handleSubmit, className: 'space-y-4' },
@@ -83,32 +78,45 @@ const AccountFormModal = ({ account, onClose }) => {
     );
 };
 
+// --- Komponen Modal Input Nama Pengguna ---
+const InputUserModal = ({ onSubmit, onClose }) => {
+    const [name, setName] = useState('');
+    return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+        React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-sm text-white', initial: { scale: 0.8 }, animate: { scale: 1 }, exit: { scale: 0.8 } },
+            React.createElement('h3', { className: 'text-lg font-bold mb-4' }, 'Masukkan Nama Pengguna'),
+            React.createElement('input', { type: 'text', value: name, onChange: (e) => setName(e.target.value), className: 'w-full bg-discord-darker p-2 rounded mb-4', placeholder: 'Nama...' }),
+            React.createElement('div', { className: 'flex justify-end gap-4' },
+                React.createElement('button', { onClick: onClose, className: 'bg-gray-600 py-2 px-4 rounded' }, 'Batal'),
+                React.createElement('button', { onClick: () => onSubmit(name), className: 'bg-discord-blurple py-2 px-4 rounded' }, 'Simpan')
+            )
+        )
+    );
+};
+
 // --- Komponen Manajemen PC ---
 const PCManagement = () => {
     const [pcSlots, setPcSlots] = useState([]);
+    const [isInputModalOpen, setInputModalOpen] = useState(false);
+    const [selectedPcId, setSelectedPcId] = useState(null);
     useEffect(() => {
         const q = query(collection(db, 'pc_slots'));
         const unsubscribe = onSnapshot(q, (snapshot) => setPcSlots(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
         return () => unsubscribe();
     }, []);
-    const handleStatusChange = async (id, newStatus) => {
-        let updateData = { status: newStatus };
-        if (newStatus === 'READY' || newStatus === 'OFFLINE') { updateData.currentUser = null; updateData.startTime = null; } 
-        else if (newStatus === 'DIGUNAKAN') {
-            const userName = prompt("Masukkan nama pengguna:", "");
-            if (userName) { updateData.currentUser = userName; updateData.startTime = serverTimestamp(); } 
-            else { return; }
-        }
-        await updateDoc(doc(db, 'pc_slots', id), updateData);
+    const handleStatusChange = (id, newStatus) => {
+        if (newStatus === 'DIGUNAKAN') { setSelectedPcId(id); setInputModalOpen(true); } 
+        else { updateDoc(doc(db, 'pc_slots', id), { status: newStatus, currentUser: null, startTime: null }); }
+    };
+    const handleUserInputSubmit = async (userName) => {
+        if (userName && selectedPcId) { await updateDoc(doc(db, 'pc_slots', selectedPcId), { status: 'DIGUNAKAN', currentUser: userName, startTime: serverTimestamp() }); }
+        setInputModalOpen(false); setSelectedPcId(null);
     };
     return React.createElement('div', null,
+        React.createElement(AnimatePresence, null, isInputModalOpen && React.createElement(InputUserModal, { onClose: () => setInputModalOpen(false), onSubmit: handleUserInputSubmit })),
         React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Monitor, { size: 20, className: 'mr-2' }), 'Status Slot PC'),
         React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-4 rounded-lg space-y-3' },
             pcSlots.length > 0 ? pcSlots.map(pc => React.createElement('div', { key: pc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between items-center' },
-                React.createElement('div', null,
-                    React.createElement('p', { className: 'font-bold' }, pc.slotId),
-                    React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)
-                ),
+                React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, pc.slotId), React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)),
                 React.createElement('select', { value: pc.status, onChange: (e) => handleStatusChange(pc.id, e.target.value), className: 'bg-discord-dark text-white rounded p-1 text-sm' },
                     React.createElement('option', { value: 'READY' }, 'Ready'),
                     React.createElement('option', { value: 'DIGUNAKAN' }, 'Digunakan'),
@@ -161,7 +169,7 @@ export default function AdminPage() {
     const pendingTransactions = transactions.filter(tx => tx.status === 'menunggu konfirmasi');
     const activeTransactions = transactions.filter(tx => tx.status === 'aktif');
     
-    const renderTabs = () => {
+    const renderTabContent = () => {
         switch (activeTab) {
             case 'transactions':
                 return React.createElement(motion.div, { key: 'transactions', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
@@ -227,7 +235,7 @@ export default function AdminPage() {
             React.createElement('button', { onClick: () => setActiveTab('accounts'), className: `py-2 px-4 font-semibold ${activeTab === 'accounts' ? 'text-white border-b-2 border-discord-blurple' : 'text-discord-gray'}` }, 'Manajemen Akun'),
             React.createElement('button', { onClick: () => setActiveTab('verifications'), className: `py-2 px-4 font-semibold ${activeTab === 'verifications' ? 'text-white border-b-2 border-discord-blurple' : 'text-discord-gray'}` }, `Verifikasi User (${verifRequests.length})`)
         ),
-        React.createElement(AnimatePresence, { mode: 'wait' }, renderTabs()),
+        React.createElement(AnimatePresence, { mode: 'wait' }, renderTabContent()),
         React.createElement(AnimatePresence, null, 
             selectedRequest && React.createElement(VerificationModal, { request: selectedRequest, onClose: () => setSelectedRequest(null) }),
             isAccountModalOpen && React.createElement(AccountFormModal, { account: editingAccount, onClose: () => setAccountModalOpen(false) })

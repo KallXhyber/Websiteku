@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock } from 'lucide-react';
-// Import koneksi Firebase yang sudah kita buat
 import { auth, db } from '../utils/firebase';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
@@ -20,25 +19,22 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
     try {
-      // 1. Buat user baru di Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Buat dokumen user baru di Firestore Database
+      const randomAvatarId = Math.floor(Math.random() * 70);
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
-        displayName: user.email.split('@')[0], // Nama default dari email
-        photoURL: '', // Kosongkan dulu
-        verificationStatus: 'belum terverifikasi', // Status default
+        displayName: user.email.split('@')[0],
+        photoURL: `https://i.pravatar.cc/150?img=${randomAvatarId}`,
+        verificationStatus: 'belum terverifikasi',
         createdAt: new Date(),
       });
       
-      // 3. Arahkan ke halaman login setelah berhasil
       router.push('/login');
 
     } catch (err) {
-      // Tangani error (misal: email sudah terdaftar, password lemah)
       setError(err.message);
       console.error(err);
     }
