@@ -46,7 +46,7 @@ const TransactionItem = ({ tx }) => {
 };
 
 export default function ProfilePage() {
-    const { user, userData, loading, setUserData } = useAuth(); // Ambil setUserData
+    const { user, userData, loading, setUserData } = useAuth();
     const [transactions, setTransactions] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState('');
@@ -75,17 +75,23 @@ export default function ProfilePage() {
         if (newName.trim() === '' || !user) return;
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, { displayName: newName });
-        setUserData({ ...userData, displayName: newName }); // Update state lokal
+        setUserData({ ...userData, displayName: newName });
         setIsEditing(false);
     };
 
-    if (loading || !user) { return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...'); }
+    if (loading || !user || !userData) { return React.createElement('div', { className: 'flex justify-center items-center h-screen' }, 'Loading...'); }
 
     return React.createElement('div', { className: 'container mx-auto px-4 py-8' },
         React.createElement(Head, null, React.createElement('title', null, 'Profil Saya - XyCloud')),
         React.createElement(motion.div, { className: 'bg-black/20 border border-discord-darker p-8 rounded-lg shadow-xl' },
             React.createElement('div', { className: 'flex flex-col md:flex-row items-center md:items-start text-center md:text-left mb-10' },
-                React.createElement('img', { src: userData?.photoURL || 'https://i.pravatar.cc/150', alt: "Profile Avatar", className: 'w-24 h-24 bg-discord-darker rounded-full mb-4 md:mb-0 md:mr-6 object-cover' }),
+                React.createElement('div', { className: 'w-24 h-24 bg-discord-darker rounded-full mb-4 md:mb-0 md:mr-6 p-1' }, // Added padding
+                    React.createElement('img', { 
+                        src: userData.photoURL, // Langsung dari userData
+                        alt: "Profile Avatar", 
+                        className: 'w-full h-full rounded-full object-cover'
+                    })
+                ),
                 React.createElement('div', { className: 'mt-2' },
                     isEditing ? 
                         React.createElement('div', { className: 'flex items-center gap-2' },
@@ -93,14 +99,14 @@ export default function ProfilePage() {
                             React.createElement('button', { onClick: handleSaveName, className: 'bg-green-600 p-2 rounded hover:bg-green-700' }, React.createElement(Check, null))
                         ) :
                         React.createElement('div', { className: 'flex items-center gap-4' },
-                            React.createElement('h1', { className: 'text-3xl font-extrabold' }, userData?.displayName || user.email.split('@')[0]),
+                            React.createElement('h1', { className: 'text-3xl font-extrabold' }, userData.displayName || user.email.split('@')[0]),
                             React.createElement('button', { onClick: () => setIsEditing(true), className: 'text-discord-gray hover:text-white' }, React.createElement(Edit, { size: 20 }))
                         ),
                     React.createElement('p', { className: 'text-discord-gray' }, user.email)
                 )
             ),
             React.createElement('div', { className: 'grid lg:grid-cols-3 gap-6' },
-                React.createElement('div', { className: 'lg:col-span-1' }, React.createElement(VerificationStatus, { status: userData?.verificationStatus })),
+                React.createElement('div', { className: 'lg:col-span-1' }, React.createElement(VerificationStatus, { status: userData.verificationStatus })),
                 React.createElement('div', { className: 'lg:col-span-2' },
                     React.createElement('h2', { className: 'text-xl font-bold mb-4 flex items-center' }, React.createElement(Clock, { className: 'mr-2' }), 'Riwayat Transaksi'),
                     React.createElement('div', { className: 'space-y-3' },

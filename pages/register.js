@@ -22,12 +22,15 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const randomAvatarId = Math.floor(Math.random() * 70);
+      // Membuat dokumen user baru di Firestore dengan avatar unik dari Dicebear
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
         displayName: user.email.split('@')[0],
-        photoURL: `https://i.pravatar.cc/150?img=${randomAvatarId}`,
+        // --- INI BAGIAN YANG BARU ---
+        // Membuat URL avatar unik berdasarkan ID pengguna
+        photoURL: `https://api.dicebear.com/9.x/micah/svg?seed=${user.uid}`,
+        // -------------------------
         verificationStatus: 'belum terverifikasi',
         createdAt: new Date(),
       });
