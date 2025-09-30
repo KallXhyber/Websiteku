@@ -16,23 +16,38 @@ const StatusBadge = ({ status }) => {
     }, status);
 };
 
-const TimeCounter = ({ startTime }) => {
-    const [duration, setDuration] = useState('00:00:00');
+const CountdownTimer = ({ startTime, durationHours }) => {
+    const [remainingTime, setRemainingTime] = useState('Menghitung...');
+
     useEffect(() => {
-        if (!startTime) return;
+        if (!startTime || !durationHours) {
+            setRemainingTime('N/A');
+            return;
+        }
+
         const interval = setInterval(() => {
             const now = new Date();
             const start = startTime.toDate();
-            const diff = now.getTime() - start.getTime();
-            if (diff < 0) return;
+            const endTime = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+            const diff = endTime.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                setRemainingTime("Waktu Habis");
+                clearInterval(interval);
+                return;
+            }
+
             const hours = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
             const minutes = Math.floor((diff / (1000 * 60)) % 60).toString().padStart(2, '0');
             const seconds = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
-            setDuration(`${hours}:${minutes}:${seconds}`);
+
+            setRemainingTime(`${hours}:${minutes}:${seconds}`);
         }, 1000);
+
         return () => clearInterval(interval);
-    }, [startTime]);
-    return React.createElement('span', null, duration);
+    }, [startTime, durationHours]);
+
+    return React.createElement('span', null, remainingTime);
 };
 
 const PCMonitor = () => {
@@ -59,7 +74,7 @@ const PCMonitor = () => {
         React.createElement(motion.div, {
             className: 'flex gap-6 p-2 cursor-grab',
             drag: 'x',
-            dragConstraints: { right: 0, left: - (pcSlots.length - 2) * 290 } 
+            dragConstraints: { right: 0, left: pcSlots.length > 3 ? - (pcSlots.length - 2.5) * 312 : 0 } 
         },
             pcSlots.map(pc => React.createElement('div', {
                 key: pc.id,
@@ -77,7 +92,7 @@ const PCMonitor = () => {
                         React.createElement(User, { size: 16, className: 'mr-2' }), `Digunakan oleh: ${pc.currentUser || '...'}`
                     ),
                     React.createElement('div', { className: 'flex items-center text-discord-gray' },
-                        React.createElement(Clock, { size: 16, className: 'mr-2' }), 'Waktu berjalan: ', React.createElement(TimeCounter, {startTime: pc.startTime})
+                        React.createElement(Clock, { size: 16, className: 'mr-2' }), 'Sisa Waktu: ', React.createElement(CountdownTimer, {startTime: pc.startTime, durationHours: pc.durationHours})
                     )
                 ) : pc.status === 'READY' ? React.createElement('div', { className: 'text-center text-green-400 h-12 flex items-center justify-center' }, 'Siap Digunakan')
                   : React.createElement('div', { className: 'text-center text-gray-400 h-12 flex items-center justify-center' }, React.createElement(WifiOff, {size: 16, className: 'mr-2'}), 'PC Sedang Offline')

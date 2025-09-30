@@ -1,3 +1,4 @@
+// pages/admin/index.js
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -20,14 +21,14 @@ const VerificationModal = ({ request, onClose }) => {
       React.createElement('p', { className: 'mb-4 text-sm text-discord-gray' }, `Dikirim pada: ${request.submittedAt ? new Date(request.submittedAt.toDate()).toLocaleString() : 'N/A'}`),
       request.message && React.createElement('blockquote', { className: 'bg-discord-darker p-3 rounded-lg mb-4 text-sm italic' }, `Pesan User: "${request.message}"`),
       React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center' },
-        React.createElement('a', { href: request.discordUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Discord'),
-        React.createElement('a', { href: request.steamUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Steam'),
-        React.createElement('a', { href: request.cfxUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple transition-colors' }, 'Lihat SS Cfx.re')
+        React.createElement('a', { href: request.discordUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Discord'),
+        React.createElement('a', { href: request.steamUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Steam'),
+        React.createElement('a', { href: request.cfxUrl, target: '_blank', rel: 'noopener noreferrer', className: 'bg-discord-darker p-2 rounded hover:bg-discord-blurple' }, 'Lihat SS Cfx.re')
       ),
       React.createElement('div', { className: 'flex justify-end gap-4' },
-        React.createElement('button', { onClick: onClose, className: 'py-2 px-4 rounded font-semibold bg-gray-600 hover:bg-gray-700' }, 'Tutup'),
-        React.createElement('button', { onClick: handleReject, className: 'bg-red-600 hover:bg-red-700 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(XCircle, {size:18, className:'mr-2'}), 'Tolak'),
-        React.createElement('button', { onClick: handleApprove, className: 'bg-green-600 hover:bg-green-700 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(UserCheck, {size:18, className:'mr-2'}), 'Setujui')
+        React.createElement('button', { onClick: onClose, className: 'py-2 px-4 rounded font-semibold bg-gray-600' }, 'Tutup'),
+        React.createElement('button', { onClick: handleReject, className: 'bg-red-600 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(XCircle, {size:18, className:'mr-2'}), 'Tolak'),
+        React.createElement('button', { onClick: handleApprove, className: 'bg-green-600 py-2 px-4 rounded font-semibold flex items-center' }, React.createElement(UserCheck, {size:18, className:'mr-2'}), 'Setujui')
       )
     )
   );
@@ -78,16 +79,26 @@ const AccountFormModal = ({ account, onClose }) => {
     );
 };
 
-// --- Komponen Modal Input Nama Pengguna ---
-const InputUserModal = ({ onSubmit, onClose }) => {
+// --- Modal Baru: Input Nama Pengguna & Durasi ---
+const SetPCUsedModal = ({ onSubmit, onClose }) => {
     const [name, setName] = useState('');
+    const [duration, setDuration] = useState(1);
     return React.createElement(motion.div, { className: 'fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[60] p-4', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
         React.createElement(motion.div, { className: 'bg-discord-dark rounded-lg p-6 w-full max-w-sm text-white', initial: { scale: 0.8 }, animate: { scale: 1 }, exit: { scale: 0.8 } },
-            React.createElement('h3', { className: 'text-lg font-bold mb-4' }, 'Masukkan Nama Pengguna'),
-            React.createElement('input', { type: 'text', value: name, onChange: (e) => setName(e.target.value), className: 'w-full bg-discord-darker p-2 rounded mb-4', placeholder: 'Nama...' }),
-            React.createElement('div', { className: 'flex justify-end gap-4' },
+            React.createElement('h3', { className: 'text-lg font-bold mb-4' }, 'Atur Status "Digunakan"'),
+            React.createElement('div', { className: 'space-y-4' },
+                React.createElement('div', null,
+                    React.createElement('label', { className: 'text-sm text-discord-gray' }, 'Nama Pengguna'),
+                    React.createElement('input', { type: 'text', value: name, onChange: (e) => setName(e.target.value), className: 'w-full bg-discord-darker p-2 rounded mt-1', placeholder: 'Nama...' })
+                ),
+                React.createElement('div', null,
+                    React.createElement('label', { className: 'text-sm text-discord-gray' }, 'Durasi Sewa (Jam)'),
+                    React.createElement('input', { type: 'number', value: duration, onChange: (e) => setDuration(Number(e.target.value)), className: 'w-full bg-discord-darker p-2 rounded mt-1', min: '1' })
+                )
+            ),
+            React.createElement('div', { className: 'flex justify-end gap-4 mt-6' },
                 React.createElement('button', { onClick: onClose, className: 'bg-gray-600 py-2 px-4 rounded' }, 'Batal'),
-                React.createElement('button', { onClick: () => onSubmit(name), className: 'bg-discord-blurple py-2 px-4 rounded' }, 'Simpan')
+                React.createElement('button', { onClick: () => onSubmit(name, duration), className: 'bg-discord-blurple py-2 px-4 rounded' }, 'Simpan')
             )
         )
     );
@@ -105,24 +116,27 @@ const PCManagement = () => {
     }, []);
     const handleStatusChange = (id, newStatus) => {
         if (newStatus === 'DIGUNAKAN') { setSelectedPcId(id); setInputModalOpen(true); } 
-        else { updateDoc(doc(db, 'pc_slots', id), { status: newStatus, currentUser: null, startTime: null }); }
+        else { updateDoc(doc(db, 'pc_slots', id), { status: newStatus, currentUser: null, startTime: null, durationHours: null }); }
     };
-    const handleUserInputSubmit = async (userName) => {
-        if (userName && selectedPcId) { await updateDoc(doc(db, 'pc_slots', selectedPcId), { status: 'DIGUNAKAN', currentUser: userName, startTime: serverTimestamp() }); }
+    const handleUserInputSubmit = async (userName, durationHours) => {
+        if (userName && durationHours > 0 && selectedPcId) { await updateDoc(doc(db, 'pc_slots', selectedPcId), { status: 'DIGUNAKAN', currentUser: userName, startTime: serverTimestamp(), durationHours: durationHours }); }
         setInputModalOpen(false); setSelectedPcId(null);
     };
     return React.createElement('div', null,
-        React.createElement(AnimatePresence, null, isInputModalOpen && React.createElement(InputUserModal, { onClose: () => setInputModalOpen(false), onSubmit: handleUserInputSubmit })),
+        React.createElement(AnimatePresence, null, isInputModalOpen && React.createElement(SetPCUsedModal, { onClose: () => setInputModalOpen(false), onSubmit: handleUserInputSubmit })),
         React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Monitor, { size: 20, className: 'mr-2' }), 'Status Slot PC'),
         React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-4 rounded-lg space-y-3' },
-            pcSlots.length > 0 ? pcSlots.map(pc => React.createElement('div', { key: pc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between items-center' },
-                React.createElement('div', null, React.createElement('p', { className: 'font-bold' }, pc.slotId), React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)),
+            pcSlots.map(pc => React.createElement('div', { key: pc.id, className: 'bg-discord-darker p-3 rounded-lg flex justify-between items-center' },
+                React.createElement('div', null,
+                    React.createElement('p', { className: 'font-bold' }, pc.slotId),
+                    React.createElement('p', { className: `text-sm ${pc.status === 'READY' ? 'text-green-400' : pc.status === 'DIGUNAKAN' ? 'text-yellow-400' : 'text-gray-400'}` }, pc.status)
+                ),
                 React.createElement('select', { value: pc.status, onChange: (e) => handleStatusChange(pc.id, e.target.value), className: 'bg-discord-dark text-white rounded p-1 text-sm' },
                     React.createElement('option', { value: 'READY' }, 'Ready'),
                     React.createElement('option', { value: 'DIGUNAKAN' }, 'Digunakan'),
                     React.createElement('option', { value: 'OFFLINE' }, 'Offline')
                 )
-            )) : React.createElement('p', { className: 'text-discord-gray' }, 'Tidak ada data PC slot.')
+            ))
         )
     );
 };
@@ -172,7 +186,7 @@ export default function AdminPage() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'transactions':
-                return React.createElement(motion.div, { key: 'transactions', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+                return React.createElement(motion.div, { key: 'transactions', initial: { opacity: 0 }, animate: { opacity: 1 } },
                     React.createElement('div', { className: 'mb-8' },
                         React.createElement('h2', { className: 'text-2xl font-bold mb-4 flex items-center' }, React.createElement(Clock, { size: 20, className: 'mr-2' }), 'Menunggu Konfirmasi'),
                         React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-4 rounded-lg space-y-3' },
@@ -192,10 +206,9 @@ export default function AdminPage() {
                         )
                     )
                 );
-            case 'pcs':
-                return React.createElement(motion.div, { key: 'pcs', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }, React.createElement(PCManagement, null));
+            case 'pcs': return React.createElement(motion.div, { key: 'pcs', initial: { opacity: 0 }, animate: { opacity: 1 } }, React.createElement(PCManagement, null));
             case 'accounts':
-                return React.createElement(motion.div, { key: 'accounts', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+                return React.createElement(motion.div, { key: 'accounts', initial: { opacity: 0 }, animate: { opacity: 1 } },
                     React.createElement('div', { className: 'flex justify-between items-center mb-4' },
                         React.createElement('h2', { className: 'text-2xl font-bold flex items-center' }, React.createElement(Gamepad2, { size: 20, className: 'mr-2' }), 'Produk Akun Game'),
                         React.createElement('button', { onClick: () => { setEditingAccount(null); setAccountModalOpen(true); }, className: 'bg-green-600 text-white py-2 px-4 rounded flex items-center' }, React.createElement(PlusCircle, { size: 18, className: 'mr-2' }), 'Tambah Produk')
@@ -208,7 +221,7 @@ export default function AdminPage() {
                     )
                 );
             case 'verifications':
-                return React.createElement(motion.div, { key: 'verifications', initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } },
+                return React.createElement(motion.div, { key: 'verifications', initial: { opacity: 0 }, animate: { opacity: 1 } },
                     React.createElement('div', { className: 'bg-black/20 border border-discord-darker p-6 rounded-lg' },
                         verifRequests.length > 0 ? React.createElement('div', { className: 'space-y-4' },
                             verifRequests.map(req => React.createElement('div', { key: req.id, className: 'bg-discord-darker p-4 rounded-lg flex justify-between items-center' },
@@ -218,8 +231,7 @@ export default function AdminPage() {
                         ) : React.createElement('p', { className: 'text-discord-gray text-center' }, 'Tidak ada permintaan verifikasi yang tertunda.')
                     )
                 );
-            default:
-                return null;
+            default: return null;
         }
     };
     
