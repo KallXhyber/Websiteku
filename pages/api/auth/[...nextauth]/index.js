@@ -2,7 +2,7 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../../utils/firebase';
+import { db } from '../../../../utils/firebase';
 
 export const authOptions = {
   providers: [
