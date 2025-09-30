@@ -16,7 +16,7 @@ const pageVariants = {
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
   
-  const [background] = React.useState('https://qvrbqtkuqgiweaeyifns.supabase.co/storage/v1/object/public/assets/upscalemedia-transformed.jpeg');
+  const [background] = React.useState('https://unsplash.com/id/foto/latar-belakang-abstrak-hitam-dan-kuning-dengan-kotak-dan-persegi-panjang-QPCMXLUQWnA');
 
   const bodyStyle = {
     backgroundImage: background ? `url(${background})` : 'none',
