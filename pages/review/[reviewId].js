@@ -7,10 +7,10 @@ import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../utils/firebase';
-import { useAuth } from '../context/AuthContext';
+import { db } from '../../utils/firebase'; // Path sudah diperbaiki
+import { useAuth } from '../../context/AuthContext'; // Path sudah diperbaiki
 
-// Komponen untuk Rating Bintang
+// ... (Komponen dan logika StarRating, renderContent, dan export default)
 const StarRating = ({ rating, onRatingChange }) => {
   const [hover, setHover] = useState(0);
   return React.createElement('div', { className: 'flex justify-center mb-6' },
@@ -37,8 +37,6 @@ const StarRating = ({ rating, onRatingChange }) => {
   );
 };
 
-
-// Komponen Halaman Ulasan Utama
 export default function ReviewPage() {
   const router = useRouter();
   const { reviewId } = router.query;
@@ -71,10 +69,6 @@ export default function ReviewPage() {
           setReviewData(data);
         } else {
           setReviewData(data);
-          // Opsi: cek apakah user yang login sama dengan yang di review
-          if (user && data.userId !== user.uid) {
-             setError('Anda tidak memiliki izin untuk mengisi ulasan ini.');
-          }
         }
       } catch (err) {
         console.error('Error fetching review data:', err);
@@ -100,7 +94,7 @@ export default function ReviewPage() {
       await updateDoc(reviewDocRef, {
         rating: rating,
         comment: comment,
-        status: 'published' // Ganti status menjadi published
+        status: 'published'
       });
       setIsSubmitted(true);
     } catch (err) {
@@ -111,7 +105,7 @@ export default function ReviewPage() {
 
   const renderContent = () => {
     if (loading) {
-      return React.createElement('p', null, 'Memuat formulir ulasan...');
+      return React.createElement('p', { className: 'text-center text-discord-gray' }, 'Memuat formulir ulasan...');
     }
     
     if (error) {
